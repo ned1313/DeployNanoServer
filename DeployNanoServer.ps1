@@ -49,6 +49,7 @@ Invoke-WebRequest -Uri $WindowsServer2016IsoUrl -OutFile $env:HOMEPATH\Downloads
 Invoke-WebRequest -Uri $ConvertImageScriptUrl -OutFile $env:HOMEPATH\Downloads\$ConvertImageScriptName
 
 
+Invoke-Expression "$env:HOMEPATH\Downloads\$ConvertImageScriptName -Sourcepath "$MountedImageLetter\NanoServer\NanoServer.wim" -VHD $NanoServerVhdPath –VHDformat VHD -Edition 1"
 
 
 # Build a local directory to work with DISM
@@ -141,8 +142,8 @@ New-Item -Type Directory "$CustomImageMountFolder\Windows\panther"
 Copy-Item -Path "$DismFolder\$UnattendXMLFileName" -Destination "$CustomImageMountFolder\Windows\panther"
  
 # Copiamos el fichero en el directorio esperado dentro de Windows
-New-Item -Type Directory .\mountdir\Windows\Setup
-New-Item -Type Directory .\mountdir\Windows\Setup\Scripts
+New-Item -Type Directory $CustomImageMountFolder\Windows\Setup
+New-Item -Type Directory $CustomImageMountFolder\Windows\Setup\Scripts
 
 $SetupCmdContent = "ipconfig"
 $SetupCmdContent > "$DismFolder\SetupComplete.cmd"
@@ -156,4 +157,3 @@ Dismount-WindowsImage -Path $CustomImageMountFolder -Save
 #Set-Item WSMan:\localhost\Client\TrustedHosts 192.168.1.39
 # Debemos introducir el usuario "Administrator" y la contraseña definida en el fichero Unattend.xml
 #Enter-PSSession -ComputerName 192.168.1.39 -Credential (Get-Credential)
-
