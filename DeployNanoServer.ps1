@@ -34,16 +34,20 @@
     .PARAMETER Lang
         Selects the locaziation of the image, right now only "en-us" is supported.
 
-    .EXAMPLE
-      Prepares the Nano Server image with support for running inside a Virtual Machine
-      .\DeployNanoServer.ps1 -ComputerPackage -StoragePackage -FailoverClusterPackage -GuestPackage -IsoPath C:\ISO\file.iso
+    .EXAMPLE Creates an image with support for running inside a virtual machine
+        .\DeployNanoServer.ps1 -GuestPackage -IsoPath C:\ISO\file.iso
 
-      Prepares the Nano Server image with support for creating an Hyper-V node
-      .\DeployNanoServer.ps1 -ComputerPackage -StoragePackage -FailoverClusterPackage -GuestPackage -IsoPath C:\ISO\file.iso
+    .EXAMPLE Creates an image with support for running on a physical host
+        .\DeployNanoServer.ps1 -OemPackage -IsoPath C:\ISO\file.iso
 
-      Prepares the Nano Server image with support for creating a Scale-Out File Server in a cluster
-      .\DeployNanoServer.ps1 -ComputerPackage -StoragePackage -FailoverClusterPackage -GuestPackage -IsoPath C:\ISO\file.iso
+    .EXAMPLE Creates an image with support of the Hyper-V role for running on a physical host
+        .\DeployNanoServer.ps1 -ComputerPackage -OemPackage -IsoPath C:\ISO\file.iso
 
+    .EXAMPLE Creates an image with support of the Hyper-V role and Failover Clustering for running on a physical host
+        .\DeployNanoServer.ps1 -ComputerPackage -FailoverClusterPackage -IsoPath C:\ISO\file.iso
+
+    .EXAMPLE Creates an image with support for running inside a virtual machine and customized
+        .\DeployNanoServer.ps1 -GuestPackage -$ComputerName "NanoSever" -$AdministratorPassword "Passw0rd!" -$OrganizationOwner "Contoso" -$OrganizationName "Contoso Inc." -IsoPath C:\ISO\file.iso
 
     .NOTES 
         Windows Server 2016 Technical Preview is not a final release, it can contains
@@ -69,8 +73,6 @@ param (
   [System.Uri] $IsoPath,
   [ValidateSet("en-us")]
   [string] $Lang = "en-us"
-  
-  
 )
 
 # Environment for with DISM tools
@@ -80,17 +82,7 @@ $CustomImageMountFolder = "$env:TEMP\dism\mountdir"
 $MountedImageLetter = "D:"
 
 # Custom image
-#$NanoServerVhdName = "NanoServer-TechnicalPreview2.vhd"
 $NanoServerVhdPath = "$env:TEMP\$NanoServerVhdName"
-
-## Unnatend file XML Configuration Data
-#$ComputerName = "NanoServer"
-#$AdministratorPassword = "Passw0rd!"
-#$OrganizationOwner = "Contoso"
-#$OrganizationName = "Contoso SL"
-
-#$Lang = "en-us"
-
 $UnattendXMLFileName = "Unattend.xml"
 
 # Files required
@@ -120,7 +112,6 @@ if ( $osVersion.Major -ge 10 )
     Write-Output "-> Mounting $WindowsServer2016IsoName .ISO image"
     Mount-DiskImage -ImagePath $env:TEMP\$WindowsServer2016IsoName -StorageType ISO
 }
- 
 
 Write-Output "-> Converting .wim file to .vhd"
 Invoke-Expression "$env:TEMP\$ConvertImageScriptName -Sourcepath '$MountedImageLetter\NanoServer\NanoServer.wim' -VHD $NanoServerVhdPath –VHDformat VHD -Edition 1"
@@ -227,7 +218,14 @@ Dismount-WindowsImage -Path $CustomImageMountFolder -Save | Out-Null
 
 Write-Output "-> Your Nano Server .vhd is available at $env:TEMP"
 
-# La IP será la que haya aparecido al arranque Nano Server.
-#Set-Item WSMan:\localhost\Client\TrustedHosts 192.168.1.39
-# Debemos introducir el usuario "Administrator" y la contraseña definida en el fichero Unattend.xml
-#Enter-PSSession -ComputerName 192.168.1.39 -Credential (Get-Credential)
+
+######
+# If you boot Server Nano on Hyper-V you will see the output of the ipconfig command with the
+# details of your instance. To connect to you new Nano Server and start working with it you need
+# to do the following inside an admin powershell host
+#
+#        Set-Item WSMan:\localhost\Client\TrustedHosts <Your IP>
+#
+#        Enter-PSSession -ComputerName <Your IP> -Credential (Get-Credential)
+#
+# Default values are: Administrator / $AdministratorPassword
