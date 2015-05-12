@@ -124,6 +124,8 @@ Copy-Item -Path $MountedImageLetter\sources\api*downlevel*.dll -Destination $Dis
 Copy-Item -Path $MountedImageLetter\sources\*dism*.dll -Destination $DismFolder
 Copy-Item -Path $MountedImageLetter\sources\*provider*.dll -Destination $DismFolder
 
+$savedLocation = Get-Location 
+
 Set-Location $DismFolder
 
 Write-Output "-> Creating mount point"
@@ -215,6 +217,8 @@ Copy-Item -Path $DismFolder\SetupComplete.cmd -Destination $CustomImageMountFold
 
 Write-Output "-> Dismounting image"
 Dismount-WindowsImage -Path $CustomImageMountFolder -Save | Out-Null
+
+Set-Location $savedLocation
 
 Write-Output "-> Your Nano Server .vhd is available at $env:TEMP"
 
