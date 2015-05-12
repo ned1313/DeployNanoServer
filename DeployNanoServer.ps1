@@ -13,7 +13,7 @@
 
         If you find any bug or you want to propose a new feature don't hesitate to open an issue or pull request 
 
-    .PARAMETER ComputerPackage
+    .PARAMETER ComputePackage
         Adds support of the Hyper-V role
 
     .PARAMETER StoragePackage
@@ -58,7 +58,7 @@
 
 [CmdletBinding()]
 param (
-  [switch]$ComputerPackage,
+  [switch]$ComputePackage,
   [switch]$StoragePackage,
   [switch]$FailoverClusterPackage,
   [switch]$GuestPackage,
@@ -133,7 +133,7 @@ Write-Output "-> Mounting image"
 Mount-WindowsImage -ImagePath "$env:TEMP\$NanoServerVhdName" -Path $CustomImageMountFolder -Index 1 | Out-Null
 
 Write-Output "-> Adding selected packages..."
-if ( $ComputerPackage ){
+if ( $ComputePackage ){
     Write-Output "|-> Microsoft-NanoServer-Compute-Package.cab"
     Add-WindowsPackage -PackagePath "$MountedImageLetter\NanoServer\Packages\Microsoft-NanoServer-Compute-Package.cab" -Path $CustomImageMountFolder | Out-Null
     Add-WindowsPackage -PackagePath "$MountedImageLetter\NanoServer\Packages\$Lang\Microsoft-NanoServer-Compute-Package.cab" -Path $CustomImageMountFolder | Out-Null
