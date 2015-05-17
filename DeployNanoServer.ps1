@@ -85,6 +85,34 @@ param (
   [string] $Lang = "en-us"
 )
 
+
+<#
+    .SYNOPSIS 
+        Adds a package to the image
+
+    .PARAMETER PackageName
+        Name of the package
+#>
+function AddPackage(){
+
+param (
+  [String]$PackageName
+)
+    Write-Output "|-> $PackageName"
+    Add-WindowsPackage -PackagePath "$MountedImageLetter\NanoServer\Packages\$PackageName" -Path $CustomImageMountFolder | Out-Null
+    Add-WindowsPackage -PackagePath "$MountedImageLetter\NanoServer\Packages\$Lang\$PackageName" -Path $CustomImageMountFolder | Out-Null
+
+}
+
+<#
+    .SYNOPSIS 
+        Removes the temporal files created by the script
+#>
+function CleanTempFiles(){
+    Remove-Item -Path $DismFolder -Recurse -Force
+}
+
+
 $ErrorActionPreference = "Stop"
 
 # Environment for with DISM tools
@@ -175,39 +203,27 @@ Mount-WindowsImage -ImagePath "$env:TEMP\$NanoServerVhdName" -Path $CustomImageM
 
 Write-Output "-> Adding selected packages..."
 if ( $ComputePackage ){
-    Write-Output "|-> Microsoft-NanoServer-Compute-Package.cab"
-    Add-WindowsPackage -PackagePath "$MountedImageLetter\NanoServer\Packages\Microsoft-NanoServer-Compute-Package.cab" -Path $CustomImageMountFolder | Out-Null
-    Add-WindowsPackage -PackagePath "$MountedImageLetter\NanoServer\Packages\$Lang\Microsoft-NanoServer-Compute-Package.cab" -Path $CustomImageMountFolder | Out-Null
+    AddPackage -PackageName "Microsoft-NanoServer-Compute-Package.cab"
 }
  
 if ( $StoragePackage ) { 
-    Write-Output "|-> Microsoft-NanoServer-Storage-Package.cab"
-    Add-WindowsPackage -PackagePath "$MountedImageLetter\NanoServer\Packages\Microsoft-NanoServer-Storage-Package.cab" -Path $CustomImageMountFolder | Out-Null
-    Add-WindowsPackage -PackagePath "$MountedImageLetter\NanoServer\Packages\$Lang\Microsoft-NanoServer-Storage-Package.cab" -Path $CustomImageMountFolder | Out-Null
+    AddPackage -PackageName "Microsoft-NanoServer-Storage-Package.cab"
 }
 
 if ( $FailoverClusterPackage){
-    Write-Output "|-> Microsoft-NanoServer-Storage-Package.cab"
-    Add-WindowsPackage -PackagePath "$MountedImageLetter\NanoServer\Packages\Microsoft-NanoServer-FailoverCluster-Package.cab" -Path $CustomImageMountFolder | Out-Null
-    Add-WindowsPackage -PackagePath "$MountedImageLetter\NanoServer\Packages\$Lang\Microsoft-NanoServer-FailoverCluster-Package.cab" -Path $CustomImageMountFolder | Out-Null
+    AddPackage -PackageName "Microsoft-NanoServer-Storage-Package.cab"
 } 
 
 if ( $GuestPackage ) {
-    Write-Output "|-> Microsoft-NanoServer-Guest-Package.cab"
-    Add-WindowsPackage -PackagePath "$MountedImageLetter\NanoServer\Packages\Microsoft-NanoServer-Guest-Package.cab" -Path $CustomImageMountFolder | Out-Null
-    Add-WindowsPackage -PackagePath "$MountedImageLetter\NanoServer\Packages\$Lang\Microsoft-NanoServer-Guest-Package.cab" -Path $CustomImageMountFolder | Out-Null
+    AddPackage -PackageName "Microsoft-NanoServer-Guest-Package.cab"
 }
 
 if ( $OemPackage) { 
-    Write-Output "|-> Microsoft-NanoServer-Storage-Package.cab"
-    Add-WindowsPackage -PackagePath "$MountedImageLetter\NanoServer\Packages\Microsoft-NanoServer-OEM-Drivers-Package.cab" -Path $CustomImageMountFolder | Out-Null
-    Add-WindowsPackage -PackagePath "$MountedImageLetter\NanoServer\Packages\$Lang\Microsoft-NanoServer-OEM-Drivers-Package.cab" -Path $CustomImageMountFolder | Out-Null
+    AddPackage -PackageName "Microsoft-NanoServer-Storage-Package.cab"
 }
  
 if ( $ReverseForwardersPackage ){
-    Write-Output "|-> Microsoft-OneCore-ReverseForwarders-Package.cab"
-    Add-WindowsPackage -PackagePath "$MountedImageLetter\NanoServer\Packages\Microsoft-OneCore-ReverseForwarders-Package.cab" -Path $CustomImageMountFolder | Out-Null
-    Add-WindowsPackage -PackagePath "$MountedImageLetter\NanoServer\Packages\$Lang\Microsoft-OneCore-ReverseForwarders-Package.cab" -Path $CustomImageMountFolder | Out-Null
+    AddPackage -PackageName "Microsoft-OneCore-ReverseForwarders-Package.cab"
 }
 
 
@@ -263,9 +279,9 @@ Set-Location $savedLocation
 Write-Output "-> Your Nano Server .vhd is available at $env:TEMP"
 
 
-function CleanTempFiles(){
-    Remove-Item -Path $DismFolder -Recurse -Force
-}
+
+
+
 
 
 ######
