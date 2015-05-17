@@ -85,6 +85,8 @@ param (
   [string] $Lang = "en-us"
 )
 
+$ErrorActionPreference = "Stop"
+
 # Environment for with DISM tools
 $DismFolder = "$env:TEMP\dism"
 $CustomImageMountFolder = "$env:TEMP\dism\mountdir"
@@ -105,9 +107,16 @@ if (!$user.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)){
     Write-Output "`nERROR: You should run this script with Administrator rights."
 }
 
+Write-Output "-> Creating $DismFolder as a temporal folder"
+if (Test-Path $DismFolder){
+    CleanTempFiles    
+} 
+
+New-Item -Type Directory $DismFolder | Out-Null
+
 Write-Output "-> Downloading modified versión of Convert-WindowsImage script"
 try {
-    Invoke-WebRequest -Uri $ConvertImageScriptUrl$ConvertImageScriptName -OutFile $env:TEMP\$ConvertImageScriptName | Out-Null
+    Invoke-WebRequest -Uri $ConvertImageScriptUrl$ConvertImageScriptName -OutFile $DismFolder\$ConvertImageScriptName | Out-Null
 } catch [System.Net.WebException]{
     Write-Output "`nERROR: The resource $ConvertImageScriptUrl$ConvertImageScriptName is not available right now, please try again later"
     Return
@@ -135,12 +144,19 @@ if ( $osVersion.Major -ge 10 )
 }
 
 Write-Output "-> Converting .wim file to .vhd"
-Invoke-Expression "$env:TEMP\$ConvertImageScriptName -Sourcepath '$MountedImageLetter\NanoServer\NanoServer.wim' -VHD $NanoServerVhdPath –VHDformat VHD -Edition 1"
 
-Write-Output "`n-> Using $DismFolder folder"
-New-Item -Type Directory $DismFolder | Out-Null
+if (Test-Path $NanoServerVhdPath)
+{
+    $answer = Read-Host "--> A previous image called $NanoServerVhdName already exists. Do you want to remove it? (Y/n)"
+    if ( ($answer -eq "Y") -or ($answer -eq "y") -or ($answer -eq "") ){
+        Remove-Item -Path $NanoServerVhdPath -Force
+    } else {
+        Return
+    }
+}
+Invoke-Expression "$DismFolder\$ConvertImageScriptName -Sourcepath '$MountedImageLetter\NanoServer\NanoServer.wim' -VHD $NanoServerVhdPath –VHDformat VHD -Edition 1"
 
-Write-Output "-> Copying required files"
+Write-Output "`n-> Copying required files"
 Copy-Item -Path $MountedImageLetter\sources\api*downlevel*.dll -Destination $DismFolder
 Copy-Item -Path $MountedImageLetter\sources\*dism*.dll -Destination $DismFolder
 Copy-Item -Path $MountedImageLetter\sources\*provider*.dll -Destination $DismFolder
@@ -150,7 +166,9 @@ $savedLocation = Get-Location
 Set-Location $DismFolder
 
 Write-Output "-> Creating mount point"
-New-Item -Type Directory $CustomImageMountFolder | Out-Null
+if( !(Test-Path $CustomImageMountFolder)) {
+    New-Item -Type Directory $CustomImageMountFolder | Out-Null
+}
 
 Write-Output "-> Mounting image"
 Mount-WindowsImage -ImagePath "$env:TEMP\$NanoServerVhdName" -Path $CustomImageMountFolder -Index 1 | Out-Null
@@ -239,9 +257,15 @@ Copy-Item -Path $DismFolder\SetupComplete.cmd -Destination $CustomImageMountFold
 Write-Output "-> Dismounting image"
 Dismount-WindowsImage -Path $CustomImageMountFolder -Save | Out-Null
 
+
 Set-Location $savedLocation
 
 Write-Output "-> Your Nano Server .vhd is available at $env:TEMP"
+
+
+function CleanTempFiles(){
+    Remove-Item -Path $DismFolder -Recurse -Force
+}
 
 
 ######
