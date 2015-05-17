@@ -68,19 +68,19 @@
 
 [CmdletBinding()]
 param (
+  [Parameter(Mandatory=$true)]
+  [System.Uri] $IsoPath,
   [switch]$ComputePackage,
   [switch]$StoragePackage,
   [switch]$FailoverClusterPackage,
   [switch]$GuestPackage,
   [switch]$OemPackage,
   [switch]$ReverseForwardersPackage,
+  [string]$NanoServerVhdName = "NanoServer-TechnicalPreview2.vhd",
   [string]$ComputerName = "NanoServer",
   [string]$AdministratorPassword = "Passw0rd!",
   [string]$OrganizationOwner = "Contoso",
   [string]$OrganizationName = "Contoso Inc.",
-  [string]$NanoServerVhdName = "NanoServer-TechnicalPreview2.vhd",
-  [Parameter(Mandatory=$true)]
-  [System.Uri] $IsoPath,
   [ValidateSet("en-us")]
   [string] $Lang = "en-us"
 )
