@@ -168,7 +168,7 @@ if ( $osVersion.Major -ge 10 )
 
 } else {
     Write-Output "-> Mounting $WindowsServer2016IsoName .ISO image"
-    Mount-DiskImage -ImagePath $env:TEMP\$WindowsServer2016IsoName -StorageType ISO
+    Mount-DiskImage -ImagePath $IsoPath -StorageType ISO
 }
 
 Write-Output "-> Converting .wim file to .vhd"
