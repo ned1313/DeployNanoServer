@@ -99,8 +99,13 @@ $UnattendXMLFileName = "Unattend.xml"
 $ConvertImageScriptUrl = "https://raw.githubusercontent.com/jangelfdez/DeployNanoServer/master/"
 $ConvertImageScriptName = "Convert-WindowsImage.ps1"
 
-Write-Output "-> Downloading modified versión of Convert-WindowsImage script"
+Write-Output "-> Checking admin rights"
+$user = New-Object Security.Principal.WindowsPrincipal $([Security.Principal.WindowsIdentity]::GetCurrent())
+if (!$user.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)){
+    Write-Output "`nERROR: You should run this script with Administrator rights."
+}
 
+Write-Output "-> Downloading modified versión of Convert-WindowsImage script"
 try {
     Invoke-WebRequest -Uri $ConvertImageScriptUrl$ConvertImageScriptName -OutFile $env:TEMP\$ConvertImageScriptName | Out-Null
 } catch [System.Net.WebException]{
