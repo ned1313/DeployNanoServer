@@ -88,10 +88,13 @@ param (
   [string]$AdministratorPassword = "Passw0rd!",
   [string]$OrganizationOwner = "Contoso",
   [string]$OrganizationName = "Contoso Inc.",
-  [ValidatePattern("[1-9]\d*GB")]
-  [string] $DriveSize = "4GB",
+  [UInt64]
+  [ValidateNotNullOrEmpty()]
+  [ValidateRange(2GB, 64TB)]
+  $DriveSize = "4GB",
   [ValidateSet("en-us")]
-  [string] $Lang = "en-us"
+  [string] $Lang = "en-us",
+  [string] $Drivers
 )
 
 
@@ -111,6 +114,24 @@ param (
     Add-WindowsPackage -PackagePath "$MountedImageLetter\NanoServer\Packages\$PackageName" -Path $CustomImageMountFolder | Out-Null
     Add-WindowsPackage -PackagePath "$MountedImageLetter\NanoServer\Packages\$Lang\$PackageName" -Path $CustomImageMountFolder | Out-Null
 
+}
+<#
+    .SYNOPSIS
+        Adds drivers to the image from a folder including all subfolders
+    .PARAMETER DriversPath
+        Path for the drivers folder
+#>
+function AddDrivers(){
+    param(
+        [String]$DriversPath
+    )
+    Write-Output "|-> Using Drivers Folders $Drivers"
+    if(Test-Path $DriversPath){
+        Add-WindowsDriver -Path $CustomImageMountFolder -Recurse -Driver $DriversPath | Out-Null
+    }
+    else{
+        throw "Error: Invalid Path for Drivers submitted with value: $Drivers"
+    }
 }
 
 <#
@@ -132,6 +153,7 @@ $MountedImageLetter = "D:"
 
 # Custom image
 $NanoServerVhdPath = "$env:TEMP\$NanoServerVhdName"
+$DriveSizeBytes = $DriveSize/1
 $UnattendXMLFileName = "Unattend.xml"
 
 # Files required
@@ -191,7 +213,7 @@ if (Test-Path $NanoServerVhdPath)
         Return
     }
 }
-Invoke-Expression "$DismFolder\$ConvertImageScriptName -Sourcepath '$MountedImageLetter\NanoServer\NanoServer.wim' -VHD $NanoServerVhdPath –VHDformat VHD -Edition 1"
+Invoke-Expression "$DismFolder\$ConvertImageScriptName -Sourcepath '$MountedImageLetter\NanoServer\NanoServer.wim' -VHD $NanoServerVhdPath –VHDformat VHD -Edition 1 -SizeBytes $DriveSize"
 
 Write-Output "`n-> Copying required files"
 Copy-Item -Path $MountedImageLetter\sources\api*downlevel*.dll -Destination $DismFolder
@@ -235,7 +257,10 @@ if ( $ReverseForwardersPackage ){
     AddPackage -PackageName "Microsoft-OneCore-ReverseForwarders-Package.cab"
 }
 
-
+if($Drivers){
+    Write-Output "|-> Installing Drivers"
+    AddDrivers -DriversPath $Drivers
+}
 Write-Output "-> Applying unattend installation file"
 $UnattendXmlContent = "<?xml version='1.0' encoding='UTF-8'?> 
  <unattend xmlns='urn:schemas-microsoft-com:unattend' xmlns:wcm='http://schemas.microsoft.com/WMIConfig/2002/State' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'> 
