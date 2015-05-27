@@ -36,6 +36,13 @@
     .PARAMETER ReverseForwardersPackage
         Adds support for applications not targeted to Nano Server to be able to run creating a 
         mockup for the APIs not available.
+    
+    .PARAMETER Drivers
+        Add drivers into the VHD file from a folder containing driver subfolders holding inf, sys,
+        and other driver files.
+        
+    .PARAMETER DriveSize
+        Size of VHD file in GB, default is 4GB (Remember Nano is supposed to be Nano!)
 
     .PARAMETER Lang
         Selects the locaziation of the image, right now only "en-us" is supported.
@@ -81,6 +88,8 @@ param (
   [string]$AdministratorPassword = "Passw0rd!",
   [string]$OrganizationOwner = "Contoso",
   [string]$OrganizationName = "Contoso Inc.",
+  [ValidatePattern("[1-9]\d*GB")]
+  [string] $DriveSize = "4GB",
   [ValidateSet("en-us")]
   [string] $Lang = "en-us"
 )
