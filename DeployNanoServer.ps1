@@ -187,9 +187,8 @@ $WindowsServer2016IsoName = $splitUri[$splitUri.Count - 1]
 
 # If you are using Windows 10 10074 there is a bug
 $os = Get-WmiObject -Class Win32_OperatingSystem
-$osVersion = [System.Version]::new($os.Version)
 
-if ( $osVersion.Major -ge 10 )
+if ([int]($os.Version.Split(".")[0]) -ge 10 )
 {
     Write-Output "`nThere is a problem with Mount-Disk Cmdlet on Windows 10. Please, mount the ISO file with a double click on the $WindowsServer2016IsoName ISO"
     Read-Host -Prompt "Press any key to launch Explorer..."
@@ -199,7 +198,9 @@ if ( $osVersion.Major -ge 10 )
 
 } else {
     Write-Output "-> Mounting $WindowsServer2016IsoName .ISO image"
-    Mount-DiskImage -ImagePath $IsoPath -StorageType ISO
+    $mountvolume = Mount-DiskImage -ImagePath $IsoPath.AbsolutePath -StorageType ISO -PassThru
+    Write-Output "-> ISO mounted on $mountvolume"
+    $MountedImageLetter = ($mountVolume | Get-Volume).DriveLetter + ":"
 }
 
 Write-Output "-> Converting .wim file to .vhd"
@@ -217,8 +218,8 @@ Invoke-Expression "$DismFolder\$ConvertImageScriptName -Sourcepath '$MountedImag
 
 Write-Output "`n-> Copying required files"
 Copy-Item -Path $MountedImageLetter\sources\api*downlevel*.dll -Destination $DismFolder
-Copy-Item -Path $MountedImageLetter\sources\*dism*.dll -Destination $DismFolder
-Copy-Item -Path $MountedImageLetter\sources\*provider*.dll -Destination $DismFolder
+Copy-Item -Path $MountedImageLetter\sources\*dism* -Destination $DismFolder
+Copy-Item -Path $MountedImageLetter\sources\*provider* -Destination $DismFolder
 
 $savedLocation = Get-Location 
 
