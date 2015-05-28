@@ -111,8 +111,8 @@ param (
   [String]$PackageName
 )
     Write-Output "|-> $PackageName"
-    Add-WindowsPackage -PackagePath "$MountedImageLetter\NanoServer\Packages\$PackageName" -Path $CustomImageMountFolder | Out-Null
-    Add-WindowsPackage -PackagePath "$MountedImageLetter\NanoServer\Packages\$Lang\$PackageName" -Path $CustomImageMountFolder | Out-Null
+    Invoke-Expression "$DismFolder\dism.exe /Add-Package /PackagePath:$MountedImageLetter\NanoServer\Packages\$PackageName /Image:$CustomImageMountFolder"
+    Invoke-Expression "$DismFolder\dism.exe /Add-Package /PackagePath:$MountedImageLetter\NanoServer\Packages\$Lang\$PackageName /Image:$CustomImageMountFolder"
 
 }
 <#
@@ -127,7 +127,7 @@ function AddDrivers(){
     )
     Write-Output "|-> Using Drivers Folders $Drivers"
     if(Test-Path $DriversPath){
-        Add-WindowsDriver -Path $CustomImageMountFolder -Recurse -Driver $DriversPath | Out-Null
+        Invoke-Expression "$DismFolder\dism.exe /Add-Driver /Driver:$DriversPath /Recurse /Image:$CustomImageMountFolder"
     }
     else{
         throw "Error: Invalid Path for Drivers submitted with value: $Drivers"
@@ -290,7 +290,7 @@ $UnattendXmlContent = "<?xml version='1.0' encoding='UTF-8'?>
  </unattend>"
 
 $UnattendXmlContent | Out-File "$DismFolder\$UnattendXMLFileName" -Encoding utf8
-Use-WindowsUnattend -UnattendPath "$DismFolder\$UnattendXMLFileName" -Path $CustomImageMountFolder | Out-Null
+Invoke-Expression "$DismFolder\dism.exe /Apply-Unattend:$DismFolder\$UnattendXMLFileName /Image:$CustomImageMountFolder"
  
 Write-Output "-> Copying unattend installation file inside the image"
 New-Item -Type Directory "$CustomImageMountFolder\Windows\panther" | Out-Null
@@ -306,14 +306,17 @@ $SetupCmdContent | Out-File "$DismFolder\SetupComplete.cmd" -Encoding ascii
 Copy-Item -Path $DismFolder\SetupComplete.cmd -Destination $CustomImageMountFolder\Windows\Setup\Scripts
 
 Write-Output "-> Dismounting image"
-Dismount-WindowsImage -Path $CustomImageMountFolder -Save | Out-Null
-
+Invoke-Expression "$DismFolder\dism.exe /Unmount-Image /MountDir:$CustomImageMountFolder /Commit"
 
 Set-Location $savedLocation
 
 Write-Output "-> Your Nano Server .vhd is available at $env:TEMP"
 
+#Cleanup
+Dismount-DiskImage -ImagePath $isopath.AbsolutePath
+CleanTempFiles
 
+explorer.exe $env:TEMP
 
 
 
